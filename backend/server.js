@@ -309,7 +309,7 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.get('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
