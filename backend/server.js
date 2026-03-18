@@ -40,7 +40,17 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // --- 1. CRITICAL MIDDLEWARE ---
-app.use(cors());
+// ✅ ADVANCED CORS CONFIGURATION
+app.use(cors({
+  origin: [
+    "http://localhost:5173", 
+    "https://bake-end-bakery.vercel.app", // Update this if your frontend domain is different
+    "https://bake-end-bakery-drnf.vercel.app"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -309,15 +319,38 @@ app.post('/api/auth/register', async (req, res) => {
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-app.get('/api/auth/login', async (req, res) => {
+// ✅ Corrected to POST for Bake-end Bakery
+app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email });
+
+    // 1. Check if user exists
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    // 2. Validate password
     if (user && (await bcrypt.compare(password, user.password))) {
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '30d' });
-      res.json({ _id: user._id, name: user.name, email: user.email, token });
-    } else { res.status(401).json({ message: 'Invalid email or password' }); }
-  } catch (error) { res.status(500).json({ message: error.message }); }
+      
+      // 3. Generate JWT Token
+      const token = jwt.sign(
+        { id: user._id }, 
+        process.env.JWT_SECRET || 'secret', 
+        { expiresIn: '30d' }
+      );
+      
+      // 4. Return data to match your frontend expectations
+      res.json({ 
+        _id: user._id, 
+        name: user.name, 
+        email: user.email, 
+        token 
+      });
+
+    } else { 
+      res.status(401).json({ message: 'Invalid email or password' }); 
+    }
+  } catch (error) { 
+    res.status(500).json({ message: "Server error during login." }); 
+  }
 });
 
 // COUPON & USER PROFILE
