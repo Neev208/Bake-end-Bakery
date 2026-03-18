@@ -24,11 +24,21 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Ensure uploads folder exists physically
-const uploadsPath = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsPath)) {
-    fs.mkdirSync(uploadsPath, { recursive: true });
-    console.log("📁 Created 'uploads' directory");
+// ✅ VERCEL-COMPATIBLE UPLOADS LOGIC
+// We use process.cwd() to point to the root directory on Vercel
+const uploadsPath = path.join(process.cwd(), 'uploads');
+
+// Only try to create the folder if we are NOT on Vercel (production)
+// This prevents the "Read-only file system" error that causes the 500 crash
+if (process.env.NODE_ENV !== 'production') {
+    if (!fs.existsSync(uploadsPath)) {
+        try {
+            fs.mkdirSync(uploadsPath, { recursive: true });
+            console.log("📁 Created 'uploads' directory locally");
+        } catch (err) {
+            console.warn("⚠️ Could not create uploads folder:", err.message);
+        }
+    }
 }
 
 // --- 1. CRITICAL MIDDLEWARE ---
@@ -428,5 +438,10 @@ app.use((err, req, res, next) => {
   });
 });
 
+// ✅ VERCEL FIX: EXPORT APP
+export default app;
+
 // START SERVER
-app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
+}
