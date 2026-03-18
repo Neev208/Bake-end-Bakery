@@ -74,7 +74,7 @@ const AccountSettings = () => {
     setSubmitLoading(true);
     const storedUser = JSON.parse(localStorage.getItem("userInfo"));
     try {
-      const response = await fetch("http://localhost:5000/api/user/update-password", {
+      const response = await fetch("https://bake-end-bakery-drnf.vercel.app/api/user/update-password", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

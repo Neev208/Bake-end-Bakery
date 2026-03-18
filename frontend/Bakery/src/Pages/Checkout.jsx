@@ -17,7 +17,7 @@ import axios from "axios";
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const API_URL = "http://localhost:5000";
+  const API_URL = "https://bake-end-bakery-drnf.vercel.app";
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 

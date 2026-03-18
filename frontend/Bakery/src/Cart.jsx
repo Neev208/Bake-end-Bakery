@@ -13,7 +13,7 @@ const Cart = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   
   const navigate = useNavigate();
-  const API_URL = "http://localhost:5000";
+  const API_URL = "https://bake-end-bakery-drnf.vercel.app";
 
   const getUserInfo = () => {
     const saved = localStorage.getItem("userInfo");

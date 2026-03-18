@@ -13,7 +13,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  const API_URL = "http://localhost:5000";
+  const API_URL = "https://bake-end-bakery-drnf.vercel.app";
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);

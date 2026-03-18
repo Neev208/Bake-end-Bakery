@@ -13,7 +13,7 @@ const MyOrders = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/orders/user/${userId}`);
+        const res = await axios.get(`https://bake-end-bakery-drnf.vercel.app/api/orders/user/${userId}`);
         setOrders(res.data);
       } catch (err) {
         console.error("Failed to fetch orders");

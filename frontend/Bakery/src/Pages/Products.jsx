@@ -12,7 +12,7 @@ const Products = () => {
   const [searchQuery, setSearchQuery] = useState("");
   
   const navigate = useNavigate();
-  const API_URL = "http://localhost:5000";
+  const API_URL = "https://bake-end-bakery-drnf.vercel.app";
 
   // Using a reliable Unsplash image as a global fallback
   const RELIABLE_PLACEHOLDER = "https://images.unsplash.com/photo-1517433367423-c7e5b0f35086?w=800&q=80";
