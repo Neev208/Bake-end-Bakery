@@ -25,11 +25,9 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ✅ VERCEL-COMPATIBLE UPLOADS LOGIC
-// We use process.cwd() to point to the root directory on Vercel
 const uploadsPath = path.join(process.cwd(), 'uploads');
 
 // Only try to create the folder if we are NOT on Vercel (production)
-// This prevents the "Read-only file system" error that causes the 500 crash
 if (process.env.NODE_ENV !== 'production') {
     if (!fs.existsSync(uploadsPath)) {
         try {
@@ -94,7 +92,7 @@ const buyNowSchema = new mongoose.Schema({
 });
 const BuyNow = mongoose.models.BuyNow || mongoose.model('BuyNow', buyNowSchema);
 
-// ORDER SCHEMA (Added locally for internal route handling if needed)
+// ORDER SCHEMA
 const orderSchema = new mongoose.Schema({
   userId: String,
   customer: Object,
@@ -137,12 +135,11 @@ mongoose.connect(process.env.MONGO_URI)
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes); 
 
-// --- NEW: ORDER PLACEMENT WITH EMAIL NOTIFICATION ---
+// --- ORDER PLACEMENT WITH EMAIL NOTIFICATION ---
 app.post('/api/orders', async (req, res) => {
   const { userId, customer, items, totalAmount, paymentMethod } = req.body;
 
   try {
-    // 1. Save order to MongoDB
     const newOrder = new Order({
       userId,
       customer,
@@ -153,7 +150,6 @@ app.post('/api/orders', async (req, res) => {
     });
     const savedOrder = await newOrder.save();
 
-    // 2. Prepare Aesthetic Confirmation Email
     const orderConfirmationMail = {
       from: `"Bake-end Bakery Boutique" <${process.env.EMAIL_USER}>`,
       to: customer.email,
@@ -199,9 +195,7 @@ app.post('/api/orders', async (req, res) => {
       `
     };
 
-    // 3. Send the Email
     await transporter.sendMail(orderConfirmationMail);
-
     res.status(200).json({ success: true, order: savedOrder });
   } catch (error) {
     console.error("❌ Order/Mail Error:", error);
@@ -209,7 +203,6 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Use legacy routes for other order-related tasks if they exist
 app.use('/api/orders', orderroutes);
 
 // SUBSCRIBE ROUTE
@@ -386,7 +379,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetOtp = otp;
-    user.resetOtpExpire = Date.now() + 600000; // 10 minutes
+    user.resetOtpExpire = Date.now() + 600000;
     await user.save();
 
     await transporter.sendMail({
@@ -441,7 +434,7 @@ app.use((err, req, res, next) => {
 // ✅ VERCEL FIX: EXPORT APP
 export default app;
 
-// START SERVER
+// START SERVER (LOCAL ONLY)
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => console.log(`🚀 Server on http://localhost:${PORT}`));
 }
