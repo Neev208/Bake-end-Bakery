@@ -5,7 +5,8 @@ import {
   Save, Loader2, AlertCircle, CheckCircle2, Edit3
 } from "lucide-react";
 
-const AccountSettings = () => {
+// FIXED: Component name now matches your filename "AccountDetail"
+const AccountDetail = () => {
   const navigate = useNavigate();
   
   const [user, setUser] = useState({ name: "", email: "" });
@@ -25,7 +26,6 @@ const AccountSettings = () => {
       if (!storedUser?._id) { navigate("/login"); return; }
 
       try {
-        // Updated to use the correct profile endpoint
         const response = await fetch(`https://bake-end-bakery-drnf.vercel.app/api/user/profile/${storedUser._id}`);
         const data = await response.json();
         if (response.ok) {
@@ -120,7 +120,6 @@ const AccountSettings = () => {
                     type="text" 
                     value={user.name} 
                     onChange={(e) => setUser({...user, name: e.target.value})}
-                    /* UPDATED: Increased text size and contrast */
                     className="bg-transparent w-full outline-none text-[#4A3728] font-semibold text-base" 
                   />
                 </div>
@@ -163,7 +162,6 @@ const AccountSettings = () => {
                     value={passwords.newPassword} 
                     onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})} 
                     placeholder="••••••••" 
-                    /* UPDATED: text-base and font-semibold for maximum visibility */
                     className="bg-[#FFFDF5] px-5 py-4 rounded-xl border border-[#C2A382]/30 text-[#4A3728] font-semibold text-base focus:border-[#4A3728] outline-none transition-all placeholder-[#5F5248]/40" 
                   />
                 </div>
@@ -176,7 +174,6 @@ const AccountSettings = () => {
                     value={passwords.confirmPassword} 
                     onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})} 
                     placeholder="••••••••" 
-                    /* UPDATED: text-base and font-semibold for maximum visibility */
                     className="bg-[#FFFDF5] px-5 py-4 rounded-xl border border-[#C2A382]/30 text-[#4A3728] font-semibold text-base focus:border-[#4A3728] outline-none transition-all placeholder-[#5F5248]/40" 
                   />
                 </div>
@@ -200,4 +197,5 @@ const AccountSettings = () => {
   );
 };
 
+// FIXED: Exporting the correct component name
 export default AccountDetail;
