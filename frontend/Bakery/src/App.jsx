@@ -31,7 +31,8 @@ import PartyPlanner from './PartyPlanner';
 import CategoryPage from './Pages/CategoryPage';
 
 // --- THE ACCOUNT & SECURITY IMPORTS ---
-import AccountSettings from './Pages/AccountDetail';
+// FIXED: Importing from your file "AccountDetail"
+import AccountDetail from './Pages/AccountDetail'; 
 import ForgotPassword from "./Pages/ForgotPassword"; 
 import VerifyOTP from "./Pages/VerifyOTP";
 import MyOrders from './Pages/MyOrders';
@@ -42,12 +43,10 @@ function App() {
   useEffect(() => {
     const testConnection = async () => {
       try {
-        // Updated to absolute URL to avoid 404 proxy issues during debugging
         const res = await axios.get('http://localhost:5000/api/test'); 
         console.log("Backend connection successful:", res.data);
       } catch (err) {
         console.error("Backend Error Detail:", err.response?.data || err.message);
-        console.log("Check if your Node.js server is running on port 5000.");
       }
     };
     testConnection();
@@ -55,7 +54,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* The bg-[#0A0A0A] matches your aesthetic style perfectly. */}
       <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden">
         
         <Navbar />
@@ -75,7 +73,8 @@ function App() {
             <Route path="/verify-otp" element={<VerifyOTP />} />
 
             {/* Account Management */}
-            <Route path="/account" element={<AccountSettings/>} />
+            {/* FIXED: Using <AccountDetail /> to match the import above */}
+            <Route path="/account" element={<AccountDetail />} />
             <Route path="/my-orders" element={<MyOrders />} />
 
             {/* Newsletter & Features */}
