@@ -19,19 +19,19 @@ const Checkout = () => {
   const location = useLocation();
   const API_URL = "https://bake-end-bakery-drnf.vercel.app";
 
+  // Get user info from localStorage
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
-  // Retrieve items and discount from the previous page state
+  // State management for order details
   const [items] = useState(location.state?.items || []);
-  const [discountAmount] = useState(location.state?.discount || 0); 
+  const [discountAmount] = useState(location.state?.discount || 0);
 
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
-  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [deliveryFee, setDeliveryFee] = useState(35); // Matches your image (₹35)
   const [finalTotal, setFinalTotal] = useState(0);
 
-  const [paymentMethod, setPaymentMethod] = useState("");
-  const [paymentError, setPaymentError] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // Default to COD
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOrdered, setIsOrdered] = useState(false);
   const [orderResponseId, setOrderResponseId] = useState("");
@@ -43,25 +43,18 @@ const Checkout = () => {
     pincode: ""
   });
 
+  // Calculate totals whenever items change
   useEffect(() => {
     if (!items || items.length === 0) return;
 
-    // 1. Calculate Subtotal
     const calculatedSubtotal = items.reduce(
       (total, item) => total + Number(item.price) * Number(item.quantity),
       0
     );
 
-    // 2. Calculate Tax (5%)
-    const calculatedTax = Math.round(calculatedSubtotal * 0.05);
-
-    // 3. Match Delivery Fee to Cart (Set to 35 to match your image)
-    // If you want free delivery over 500, use: calculatedSubtotal > 500 ? 0 : 35;
+    const calculatedTax = Math.round(calculatedSubtotal * 0.05); // 5% GST
     const calculatedDelivery = 35; 
-
-    // 4. Calculate Final Total including the Discount
-    const total =
-      calculatedSubtotal + calculatedTax + calculatedDelivery - discountAmount;
+    const total = calculatedSubtotal + calculatedTax + calculatedDelivery - discountAmount;
 
     setSubtotal(calculatedSubtotal);
     setTax(calculatedTax);
@@ -69,12 +62,14 @@ const Checkout = () => {
     setFinalTotal(total);
   }, [items, discountAmount]);
 
+  // Security & Navigation guard
   useEffect(() => {
     if (!userInfo) {
-      alert("Please login to place an order.");
       navigate("/login?redirect=checkout");
     }
-    if (!location.state) navigate("/cart");
+    if (!location.state || !location.state.items) {
+      navigate("/cart");
+    }
   }, [userInfo, navigate, location.state]);
 
   const handleInputChange = (e) => {
@@ -83,12 +78,6 @@ const Checkout = () => {
 
   const handleConfirmOrder = async (e) => {
     e.preventDefault();
-
-    if (paymentMethod !== "cod") {
-      setPaymentError(true);
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -120,33 +109,37 @@ const Checkout = () => {
 
       if (response.data.success) {
         localStorage.removeItem("cart");
+        // Notify other components (Navbar) that cart is now empty
         window.dispatchEvent(new Event("cartUpdate"));
         setOrderResponseId(response.data.order._id);
         setIsOrdered(true);
       }
     } catch (err) {
-      alert("Order failed. Try again.");
+      console.error(err);
+      alert("Something went wrong while placing the order. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsSubmitting(false);
   };
 
   if (!userInfo) return null;
 
-  /* ---------- SUCCESS PAGE ---------- */
+  /* ---------- SUCCESS VIEW ---------- */
   if (isOrdered) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FFF7F0] px-6">
-        <div className="bg-white shadow-2xl rounded-3xl p-12 text-center max-w-md w-full">
-          <PackageCheck size={50} className="mx-auto text-green-500 mb-6" />
-          <h1 className="text-3xl font-bold mb-4">Order Confirmed 🎉</h1>
-          <p className="text-gray-500 mb-6">Your bakery treats are being prepared!</p>
-          <div className="bg-[#F6F1EB] p-4 rounded-xl text-sm font-mono mb-6">
-            Order ID : {orderResponseId}
+      <div className="min-h-screen flex items-center justify-center bg-[#FDF8F3] px-6">
+        <div className="bg-white shadow-2xl rounded-3xl p-10 text-center max-w-md w-full border border-orange-100">
+          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <PackageCheck size={40} className="text-green-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-[#4A3728] mb-2">Order Placed!</h1>
+          <p className="text-gray-500 mb-6">Thank you for choosing Bake-end Bakery. Your treats will arrive soon!</p>
+          <div className="bg-[#F6F1EB] p-4 rounded-xl text-sm font-mono text-[#4A3728] mb-8">
+            Order ID: <span className="font-bold">{orderResponseId}</span>
           </div>
           <button
             onClick={() => navigate("/products")}
-            className="w-full bg-[#4A3728] text-white py-3 rounded-xl hover:bg-[#6b4f3a] transition"
+            className="w-full bg-[#4A3728] text-white py-3.5 rounded-xl font-semibold hover:bg-[#3d2d21] transition-all shadow-lg"
           >
             Continue Shopping
           </button>
@@ -155,98 +148,163 @@ const Checkout = () => {
     );
   }
 
-  /* ---------- CHECKOUT PAGE ---------- */
+  /* ---------- MAIN CHECKOUT VIEW ---------- */
   return (
-    <div className="min-h-screen bg-[#FFF7F0] pt-28 pb-20 px-6">
-      <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-12">
-        {/* LEFT SIDE: Delivery Details */}
-        <div>
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[#4A3728] mb-8">
-            <ArrowLeft size={18} /> Back
-          </button>
-          <h1 className="text-4xl font-bold mb-8">Delivery Details</h1>
-          <form onSubmit={handleConfirmOrder} className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-md space-y-4">
-              <div className="flex items-center gap-3">
-                <User size={18} />
-                <input name="name" value={formData.name} onChange={handleInputChange} placeholder="Full Name" required className="w-full outline-none" />
-              </div>
-              <div className="flex items-center gap-3">
-                <Phone size={18} />
-                <input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Phone Number" required className="w-full outline-none" />
-              </div>
-              <div className="flex items-start gap-3">
-                <MapPin size={18} className="mt-1" />
-                <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="Full Address" required rows="3" className="w-full outline-none" />
-              </div>
-              <input name="pincode" value={formData.pincode} onChange={handleInputChange} placeholder="Pincode" required className="w-full border p-2 rounded-lg" />
-            </div>
+    <div className="min-h-screen bg-[#FDF8F3] pt-24 pb-20 px-4 md:px-10">
+      <div className="max-w-6xl mx-auto">
+        <button 
+          onClick={() => navigate(-1)} 
+          className="flex items-center gap-2 text-[#4A3728] font-medium mb-6 hover:translate-x-[-4px] transition-transform"
+        >
+          <ArrowLeft size={18} /> Back to Cart
+        </button>
 
-            <div
-              onClick={() => {setPaymentMethod("cod"); setPaymentError(false);}}
-              className={`cursor-pointer p-5 rounded-xl border transition ${paymentMethod === "cod" ? "bg-[#4A3728] text-white" : "bg-white"}`}
-            >
-              <div className="flex items-center gap-3">
-                <Banknote size={20} />
-                Cash on Delivery
-                {paymentMethod === "cod" && <CheckCircle size={18} className="ml-auto" />}
-              </div>
-            </div>
-
-            {paymentError && (
-              <div className="text-red-500 flex items-center gap-2 text-sm">
-                <AlertCircle size={16} /> Select payment method
-              </div>
-            )}
-
-            <button type="submit" disabled={isSubmitting} className="w-full bg-[#4A3728] text-white py-4 rounded-xl hover:bg-[#6b4f3a]">
-              {isSubmitting ? <Loader2 className="animate-spin mx-auto" /> : "Confirm Order"}
-            </button>
-          </form>
-        </div>
-
-        {/* RIGHT SIDE: Order Summary */}
-        <div className="bg-white p-8 rounded-3xl shadow-xl h-fit">
-          <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-            <Package size={22} /> Order Summary
-          </h2>
-          <div className="space-y-5 mb-6">
-            {items.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-4">
-                <img src={item.img} alt="" className="w-16 h-16 rounded-lg object-cover" />
-                <div className="flex-1">
-                  <p className="font-semibold">{item.name}</p>
-                  <p className="text-sm text-gray-500">Qty: {item.quantity}</p>
+        <div className="grid lg:grid-cols-5 gap-10">
+          
+          {/* LEFT: FORM SECTION (3 columns) */}
+          <div className="lg:col-span-3 space-y-8">
+            <h1 className="text-4xl font-bold text-[#4A3728]">Delivery Details</h1>
+            
+            <form onSubmit={handleConfirmOrder} className="space-y-6">
+              <div className="bg-white p-8 rounded-3xl shadow-sm space-y-5 border border-orange-50">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                    <User size={14} /> Full Name
+                  </label>
+                  <input 
+                    name="name" 
+                    value={formData.name} 
+                    onChange={handleInputChange} 
+                    placeholder="Enter your name" 
+                    required 
+                    className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728] transition" 
+                  />
                 </div>
-                <p className="font-semibold">₹{item.price * item.quantity}</p>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                    <Phone size={14} /> Phone Number
+                  </label>
+                  <input 
+                    name="phone" 
+                    type="tel"
+                    value={formData.phone} 
+                    onChange={handleInputChange} 
+                    placeholder="e.g. +91 9876543210" 
+                    required 
+                    className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728] transition" 
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                    <MapPin size={14} /> Shipping Address
+                  </label>
+                  <textarea 
+                    name="address" 
+                    value={formData.address} 
+                    onChange={handleInputChange} 
+                    placeholder="Street, Landmark, Apartment" 
+                    required 
+                    rows="3" 
+                    className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728] transition" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                    <label className="text-sm font-semibold text-gray-600">Pincode</label>
+                    <input 
+                      name="pincode" 
+                      value={formData.pincode} 
+                      onChange={handleInputChange} 
+                      placeholder="362001" 
+                      required 
+                      className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728] transition" 
+                    />
+                   </div>
+                </div>
               </div>
-            ))}
+
+              {/* PAYMENT BOX */}
+              <div
+                className="bg-[#4A3728] text-white p-6 rounded-2xl flex items-center justify-between shadow-md"
+              >
+                <div className="flex items-center gap-4">
+                  <Banknote size={24} />
+                  <div>
+                    <p className="font-bold">Cash on Delivery</p>
+                    <p className="text-xs text-orange-200">Pay when your cakes arrive</p>
+                  </div>
+                </div>
+                <CheckCircle size={24} className="text-orange-300" />
+              </div>
+
+              <button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="w-full bg-[#4A3728] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#3d2d21] transition-all shadow-xl disabled:opacity-70"
+              >
+                {isSubmitting ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="animate-spin" /> Placing Order...
+                  </div>
+                ) : (
+                  "Confirm Order"
+                )}
+              </button>
+            </form>
           </div>
 
-          <div className="border-t pt-4 space-y-2 text-sm">
-            <div className="flex justify-between">
-              <span>Subtotal</span>
-              <span>₹{subtotal}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>GST (5%)</span>
-              <span>₹{tax}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Delivery</span>
-              <span>{deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}</span>
-            </div>
-            {discountAmount > 0 && (
-              <div className="flex justify-between text-green-600 font-medium">
-                <span>Discount Applied</span>
-                <span>-₹{discountAmount}</span>
+          {/* RIGHT: SUMMARY SECTION (2 columns) */}
+          <div className="lg:col-span-2">
+            <div className="bg-white p-8 rounded-3xl shadow-xl border border-orange-50 sticky top-28">
+              <h2 className="text-2xl font-bold text-[#4A3728] mb-6 flex items-center gap-2">
+                <Package size={22} className="text-orange-700" /> Order Summary
+              </h2>
+              
+              <div className="max-h-[300px] overflow-y-auto space-y-4 mb-6 pr-2 custom-scrollbar">
+                {items.map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-4 border-b border-gray-50 pb-4">
+                    <img src={item.img} alt={item.name} className="w-16 h-16 rounded-xl object-cover shadow-sm" />
+                    <div className="flex-1">
+                      <p className="font-bold text-[#4A3728]">{item.name}</p>
+                      <p className="text-xs text-gray-500 bg-gray-100 w-fit px-2 py-0.5 rounded">Qty: {item.quantity}</p>
+                    </div>
+                    <p className="font-bold text-[#4A3728]">₹{item.price * item.quantity}</p>
+                  </div>
+                ))}
               </div>
-            )}
-            <div className="flex justify-between text-lg font-bold border-t pt-3">
-              <span>Total</span>
-              <span>₹{finalTotal}</span>
+
+              <div className="space-y-3 pt-2 border-t border-dashed">
+                <div className="flex justify-between text-gray-600">
+                  <span>Subtotal</span>
+                  <span>₹{subtotal}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>GST (5%)</span>
+                  <span>₹{tax}</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Delivery Fee</span>
+                  <span>{deliveryFee === 0 ? <span className="text-green-600 font-bold">FREE</span> : `₹${deliveryFee}`}</span>
+                </div>
+                
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600 font-bold bg-green-50 p-2 rounded-lg">
+                    <span>Discount Applied</span>
+                    <span>-₹{discountAmount}</span>
+                  </div>
+                )}
+
+                <div className="flex justify-between text-xl font-black text-[#4A3728] border-t pt-4 mt-2">
+                  <span>Total</span>
+                  <span>₹{finalTotal}</span>
+                </div>
+              </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
