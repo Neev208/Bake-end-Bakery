@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import axios from 'axios';
 
 // Component Imports
 import Navbar from './Components/Navbar';
@@ -33,12 +34,29 @@ import CategoryPage from './Pages/CategoryPage';
 import AccountSettings from './Pages/AccountDetail';
 import ForgotPassword from "./Pages/ForgotPassword"; 
 import VerifyOTP from "./Pages/VerifyOTP";
-import MyOrders from './Pages/MyOrders'; // <-- Added MyOrders Import
+import MyOrders from './Pages/MyOrders';
 
 function App() {
+
+  // Connection test to verify backend reachability
+  useEffect(() => {
+    const testConnection = async () => {
+      try {
+        // Updated to absolute URL to avoid 404 proxy issues during debugging
+        const res = await axios.get('http://localhost:5000/api/test'); 
+        console.log("Backend connection successful:", res.data);
+      } catch (err) {
+        console.error("Backend Error Detail:", err.response?.data || err.message);
+        console.log("Check if your Node.js server is running on port 5000.");
+      }
+    };
+    testConnection();
+  }, []);
+
   return (
     <BrowserRouter>
-      <div className="flex flex-col min-h-screen bg-[#0A0A0A]">
+      {/* The bg-[#0A0A0A] matches your aesthetic style perfectly. */}
+      <div className="flex flex-col min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden">
         
         <Navbar />
 
@@ -58,7 +76,7 @@ function App() {
 
             {/* Account Management */}
             <Route path="/account" element={<AccountSettings/>} />
-            <Route path="/my-orders" element={<MyOrders />} /> {/* <-- Added MyOrders Route */}
+            <Route path="/my-orders" element={<MyOrders />} />
 
             {/* Newsletter & Features */}
             <Route path="/newsletter" element={<NewsletterPage />} />
@@ -79,6 +97,9 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout/>} />
             <Route path="/order-success" element={<Success />} /> 
+
+            {/* Catch-all for 404s */}
+            <Route path="*" element={<Home />} />
           </Routes>
         </main>
 
