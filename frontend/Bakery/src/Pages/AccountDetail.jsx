@@ -65,7 +65,7 @@ const AccountSettings = () => {
     }
   };
 
-  // --- Update Password Handler (Modified to remove oldPassword) ---
+  // --- Update Password Handler ---
   const handleUpdatePassword = async (e) => {
     e.preventDefault();
     if (passwords.newPassword !== passwords.confirmPassword) {
@@ -116,7 +116,7 @@ const AccountSettings = () => {
             
             <form onSubmit={handleUpdateName} className="space-y-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] uppercase font-black tracking-widest text-[#C2A382]">Full Name</label>
+                <label className="text-[10px] uppercase font-black tracking-widest text-[#C2A382] ml-4">Full Name</label>
                 <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-xl border border-[#C2A382]/30 focus-within:border-[#4A3728] transition-all">
                   <Edit3 size={16} className="text-[#C2A382]" />
                   <input 
@@ -129,20 +129,20 @@ const AccountSettings = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] uppercase font-black tracking-widest text-[#C2A382]">Email Address (Permanent)</label>
+                <label className="text-[10px] uppercase font-black tracking-widest text-[#C2A382] ml-4">Email Address (Permanent)</label>
                 <div className="flex items-center gap-3 bg-[#4A3728]/5 px-4 py-3 rounded-xl">
                   <Mail size={16} className="text-[#4A3728]/40" />
                   <input type="email" readOnly value={user.email} className="bg-transparent w-full outline-none text-[#4A3728] font-medium opacity-60" />
                 </div>
               </div>
 
-              <button type="submit" disabled={nameLoading} className="text-[10px] font-bold text-[#C2A382] hover:text-[#4A3728] flex items-center gap-1 transition-colors uppercase tracking-widest">
+              <button type="submit" disabled={nameLoading} className="text-[10px] font-bold text-[#C2A382] hover:text-[#4A3728] flex items-center gap-1 transition-colors uppercase tracking-widest ml-4">
                 {nameLoading ? <Loader2 className="animate-spin" size={12} /> : <Save size={12} />} Save Identity Changes
               </button>
             </form>
           </div>
 
-          {/* SECTION: SECURITY (Updated) */}
+          {/* SECTION: SECURITY */}
           <div className="bg-white rounded-[2rem] p-8 border border-[#C2A382]/20 shadow-lg relative overflow-hidden">
             <div className="flex items-center gap-3 mb-6">
               <div className="bg-[#4A3728] p-2 rounded-lg text-[#FFFDF5]"><ShieldCheck size={20} /></div>
@@ -151,24 +151,30 @@ const AccountSettings = () => {
             <form onSubmit={handleUpdatePassword} className="space-y-4">
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <input 
-                  name="newPassword" 
-                  type="password" 
-                  required 
-                  value={passwords.newPassword} 
-                  onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})} 
-                  placeholder="New secret" 
-                  className="bg-white px-4 py-3 rounded-xl border border-[#C2A382]/30 focus:border-[#4A3728] outline-none" 
-                />
-                <input 
-                  name="confirmPassword" 
-                  type="password" 
-                  required 
-                  value={passwords.confirmPassword} 
-                  onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})} 
-                  placeholder="Repeat secret" 
-                  className="bg-white px-4 py-3 rounded-xl border border-[#C2A382]/30 focus:border-[#4A3728] outline-none" 
-                />
+                <div className="flex flex-col gap-1.5">
+                   <label className="text-[10px] uppercase font-black tracking-widest text-[#C2A382] ml-4">New Password</label>
+                   <input 
+                    name="newPassword" 
+                    type="password" 
+                    required 
+                    value={passwords.newPassword} 
+                    onChange={(e) => setPasswords({...passwords, newPassword: e.target.value})} 
+                    placeholder="••••••••" 
+                    className="bg-[#FFFDF5] px-4 py-3 rounded-xl border border-[#C2A382]/30 text-[#4A3728] font-bold focus:border-[#4A3728] outline-none transition-all placeholder-[#5F5248]/30" 
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                   <label className="text-[10px] uppercase font-black tracking-widest text-[#C2A382] ml-4">Confirm Password</label>
+                   <input 
+                    name="confirmPassword" 
+                    type="password" 
+                    required 
+                    value={passwords.confirmPassword} 
+                    onChange={(e) => setPasswords({...passwords, confirmPassword: e.target.value})} 
+                    placeholder="••••••••" 
+                    className="bg-[#FFFDF5] px-4 py-3 rounded-xl border border-[#C2A382]/30 text-[#4A3728] font-bold focus:border-[#4A3728] outline-none transition-all placeholder-[#5F5248]/30" 
+                  />
+                </div>
               </div>
 
               {message.text && (

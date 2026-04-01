@@ -98,15 +98,15 @@ const Login = () => {
               />
             </div>
           </div>
-{/* Inside Login.jsx, right after the Password input div */}
-<div className="flex justify-end pr-2">
-  <Link 
-    to="/forgot-password" 
-    className="text-[10px] font-black uppercase tracking-widest text-[#C2A382] hover:text-[#4A3728] transition-colors"
-  >
-    Forgot Password?
-  </Link>
-</div>
+
+          <div className="flex justify-end pr-2">
+            <Link 
+              to="/forgot-password" 
+              className="text-[10px] font-black uppercase tracking-widest text-[#C2A382] hover:text-[#4A3728] transition-colors"
+            >
+              Forgot Password?
+            </Link>
+          </div>
 
           {error && (
             <div className="text-red-600 text-[10px] text-center font-black uppercase tracking-wider bg-red-50 py-3 rounded-xl border border-red-100 animate-pulse">

@@ -34,8 +34,8 @@
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  /* Changed place-items: center to allow normal page scrolling */
+  display: block; 
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--bg-vanilla);
@@ -84,13 +84,19 @@ body {
   }
 }
 
-/* --- BOUTIQUE FORM FIXES (The "Same" Fix) --- */
-/* This handles the browser autofill to match your Espresso theme */
+/* --- BOUTIQUE FORM FIXES --- */
+/* This ensures password dots and text are always visible, 
+   even when the browser tries to autofill them. */
+input {
+  color: var(--text-espresso);
+}
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--text-espresso) !important;
-  -webkit-box-shadow: 0 0 0px 1000px #FFFFFF inset !important;
+  /* Changed background to match your Vanilla theme */
+  -webkit-box-shadow: 0 0 0px 1000px var(--bg-vanilla) inset !important;
   border: 1px solid var(--accent-gold) !important;
   transition: background-color 5000s ease-in-out 0s;
 }
