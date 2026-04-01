@@ -110,3 +110,17 @@ function App() {
 }
 
 export default App;
+
+// Inside App.jsx
+useEffect(() => {
+  const testConnection = async () => {
+    try {
+      // Switch this to your Vercel URL for production testing
+      const res = await axios.get('https://bake-end-bakery-drnf.vercel.app/api/test'); 
+      console.log("Backend connection successful:", res.data);
+    } catch (err) {
+      console.error("Backend Error:", err.message);
+    }
+  };
+  testConnection();
+}, []);
