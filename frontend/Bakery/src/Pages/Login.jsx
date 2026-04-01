@@ -10,7 +10,7 @@ const Login = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    if (error) setError(""); // Clear error when user types
+    if (error) setError(""); 
   };
 
   const handleSubmit = async (e) => {
@@ -28,13 +28,8 @@ const Login = () => {
       const data = await response.json();
 
       if (response.ok) {
-        // 1. Save using the "userInfo" key to match your Navbar's checkLogin function
         localStorage.setItem("userInfo", JSON.stringify(data));
-
-        // 2. DISPATCH CUSTOM EVENT: This tells the Navbar to refresh its state immediately
         window.dispatchEvent(new Event("authChange"));
-
-        // 3. Redirect to home
         navigate("/"); 
       } else {
         setError(data.message || "Invalid email or password");
@@ -70,14 +65,15 @@ const Login = () => {
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-[#C2A382] ml-4">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-[#C2A382]/50" size={16} />
+              <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-[#C2A382]/50" size={18} />
               <input 
                 name="email" 
                 type="email" 
-                placeholder="YOURNAME@EMAIL.COM" 
+                placeholder="email@example.com" 
                 onChange={handleChange} 
                 value={formData.email}
-                className="w-full pl-12 pr-6 py-4 rounded-2xl bg-[#FFFDF5] border border-[#C2A382]/30 text-[#4A3728] font-bold text-xs tracking-widest placeholder-[#5F5248]/30 focus:outline-none focus:border-[#4A3728] transition-all" 
+                /* UPDATED: Increased text size to text-base, normalized tracking, and set bold dark text */
+                className="w-full pl-14 pr-6 py-4 rounded-2xl bg-[#FFFDF5] border border-[#C2A382]/30 text-[#4A3728] font-semibold text-base placeholder-[#5F5248]/40 focus:outline-none focus:border-[#4A3728] transition-all" 
                 required 
               />
             </div>
@@ -86,14 +82,15 @@ const Login = () => {
           <div className="space-y-1.5">
             <label className="text-[10px] font-black uppercase tracking-widest text-[#C2A382] ml-4">Password</label>
             <div className="relative">
-              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#C2A382]/50" size={16} />
+              <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-[#C2A382]/50" size={18} />
               <input 
                 name="password" 
                 type="password" 
                 placeholder="••••••••" 
                 onChange={handleChange} 
                 value={formData.password}
-                className="w-full pl-12 pr-6 py-4 rounded-2xl bg-[#FFFDF5] border border-[#C2A382]/30 text-[#4A3728] font-bold text-xs tracking-widest placeholder-[#5F5248]/30 focus:outline-none focus:border-[#4A3728] transition-all" 
+                /* UPDATED: Increased text size to text-base and ensured strong visibility */
+                className="w-full pl-14 pr-6 py-4 rounded-2xl bg-[#FFFDF5] border border-[#C2A382]/30 text-[#4A3728] font-semibold text-base placeholder-[#5F5248]/40 focus:outline-none focus:border-[#4A3728] transition-all" 
                 required 
               />
             </div>
@@ -117,7 +114,7 @@ const Login = () => {
           <button 
             type="submit" 
             disabled={isLoading} 
-            className="w-full bg-[#4A3728] text-[#FFFDF5] py-6 rounded-full font-black uppercase text-[10px] tracking-[0.3em] transition-all mt-4 flex justify-center items-center shadow-xl shadow-[#4A3728]/20 hover:bg-[#C2A382] disabled:opacity-70 disabled:cursor-not-allowed active:scale-95"
+            className="w-full bg-[#4A3728] text-[#FFFDF5] py-6 rounded-full font-black uppercase text-[11px] tracking-[0.3em] transition-all mt-4 flex justify-center items-center shadow-xl shadow-[#4A3728]/20 hover:bg-[#C2A382] disabled:opacity-70 disabled:cursor-not-allowed active:scale-95"
           >
             {isLoading ? <Loader2 className="animate-spin" size={18} /> : "Unlock Bakery"}
           </button>
