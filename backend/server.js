@@ -44,7 +44,7 @@ if (process.env.NODE_ENV !== 'production') {
 app.use(cors({
   origin: [
     "http://localhost:5173", 
-    "https://bake-end-bakery.vercel.app", // Update this if your frontend domain is different
+    "https://bake-end-bakery.vercel.app", 
     "https://bake-end-bakery-drnf.vercel.app"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -144,6 +144,11 @@ mongoose.connect(process.env.MONGO_URI)
 // --- 5. API ROUTES ---
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes); 
+
+// --- TEST ROUTE FOR VITE PROXY ---
+app.get('/api/test', (req, res) => {
+  res.json({ message: "Bake-end Backend is responding correctly!" });
+});
 
 // --- ORDER PLACEMENT WITH EMAIL NOTIFICATION ---
 app.post('/api/orders', async (req, res) => {
@@ -309,35 +314,28 @@ app.post('/api/admin/broadcast', async (req, res) => {
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    const userExists = await User.findOne({ email });
+    const userExists = await User.findOne({ email: email.toLowerCase() });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const user = await User.create({ name, email, password: hashedPassword });
+    const user = await User.create({ name, email: email.toLowerCase(), password: hashedPassword });
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'secret', { expiresIn: '30d' });
     res.status(201).json({ _id: user._id, name: user.name, email: user.email, token });
   } catch (error) { res.status(500).json({ message: error.message }); }
 });
 
-// ✅ Corrected to POST for Bake-end Bakery
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
-    // 1. Check if user exists
     const user = await User.findOne({ email: email.toLowerCase() });
     
-    // 2. Validate password
     if (user && (await bcrypt.compare(password, user.password))) {
-      
-      // 3. Generate JWT Token
       const token = jwt.sign(
         { id: user._id }, 
         process.env.JWT_SECRET || 'secret', 
         { expiresIn: '30d' }
       );
       
-      // 4. Return data to match your frontend expectations
       res.json({ 
         _id: user._id, 
         name: user.name, 
@@ -407,7 +405,7 @@ app.post('/api/contact', async (req, res) => {
 app.post('/api/auth/forgot-password', async (req, res) => {
   const { email } = req.body;
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase() });
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
@@ -432,7 +430,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
   const { email, otp, newPassword } = req.body;
   try {
     const user = await User.findOne({ 
-      email, 
+      email: email.toLowerCase(), 
       resetOtp: otp, 
       resetOtpExpire: { $gt: Date.now() } 
     });
