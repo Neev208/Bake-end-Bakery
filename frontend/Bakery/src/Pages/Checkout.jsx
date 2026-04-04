@@ -10,20 +10,18 @@ import {
   MapPin,
   Phone,
   User,
-  QrCode // Added for the new UI
+  QrCode
 } from "lucide-react";
 import axios from "axios";
-import { QRCodeSVG } from "react-qr-code"; // QR Component
+import { QRCodeSVG } from "react-qr-code";
 
 const Checkout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const API_URL = "https://bake-end-bakery-drnf.vercel.app";
 
-  // Get user info from localStorage
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
 
-  // State management for order details
   const [items] = useState(location.state?.items || []);
   const [discountAmount] = useState(location.state?.discount || 0);
 
@@ -32,8 +30,8 @@ const Checkout = () => {
   const [deliveryFee, setDeliveryFee] = useState(35); 
   const [finalTotal, setFinalTotal] = useState(0);
 
-  // --- NEW STATE FOR PAYMENT METHOD ---
-  const [paymentMethod, setPaymentMethod] = useState("cod"); // "cod" or "qr"
+  // PAYMENT STATE
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // 'cod' or 'qr'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOrdered, setIsOrdered] = useState(false);
   const [orderResponseId, setOrderResponseId] = useState("");
@@ -45,80 +43,43 @@ const Checkout = () => {
     pincode: ""
   });
 
-  // --- BAKERY PAYMENT CONFIG (Used for QR code string) ---
-  const BAKERY_UPI_ID = "bake-end@ybl"; // Replace with your actual UPI ID
-  const BAKERY_NAME = "Bake-end Bakery";
-  const upiString = `upi://pay?pa=${BAKERY_UPI_ID}&pn=${BAKERY_NAME}&am=${finalTotal}&cu=INR`;
+  // UPI CONFIG
+  const BAKERY_UPI_ID = "yourname@bank"; // CHANGE THIS TO YOUR UPI ID
+  const upiString = `upi://pay?pa=${BAKERY_UPI_ID}&pn=Bake-end Bakery&am=${finalTotal}&cu=INR`;
 
   useEffect(() => {
     if (!items || items.length === 0) return;
-
-    const calculatedSubtotal = items.reduce(
-      (total, item) => total + Number(item.price) * Number(item.quantity),
-      0
-    );
-
+    const calculatedSubtotal = items.reduce((total, item) => total + Number(item.price) * Number(item.quantity), 0);
     const calculatedTax = Math.round(calculatedSubtotal * 0.05); 
-    const calculatedDelivery = 35; 
-    const total = calculatedSubtotal + calculatedTax + calculatedDelivery - discountAmount;
-
+    const total = calculatedSubtotal + calculatedTax + 35 - discountAmount;
     setSubtotal(calculatedSubtotal);
     setTax(calculatedTax);
-    setDeliveryFee(calculatedDelivery);
     setFinalTotal(total);
   }, [items, discountAmount]);
 
   useEffect(() => {
-    if (!userInfo) {
-      navigate("/login?redirect=checkout");
-    }
-    if (!location.state || !location.state.items) {
-      navigate("/cart");
-    }
+    if (!userInfo) navigate("/login?redirect=checkout");
+    if (!location.state?.items) navigate("/cart");
   }, [userInfo, navigate, location.state]);
 
-  const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleConfirmOrder = async (e) => {
     e.preventDefault();
-    
-    // Safety check for QR
     if(paymentMethod === "qr") {
-        const confirmed = window.confirm("Please confirm that you have completed the QR payment before placing the order.");
+        const confirmed = window.confirm("Have you completed the QR payment?");
         if(!confirmed) return;
     }
-
     setIsSubmitting(true);
-
     try {
       const orderData = {
         userId: userInfo._id,
-        customer: {
-          name: formData.name,
-          phone: formData.phone,
-          address: formData.address,
-          pincode: formData.pincode,
-          email: userInfo.email
-        },
-        items: items.map((item) => ({
-          name: item.name,
-          price: Number(item.price),
-          quantity: Number(item.quantity),
-          img: item.img || item.image || ""
-        })),
-        subtotal,
-        tax,
-        deliveryFee,
-        discountAmount,
-        totalAmount: finalTotal,
-        paymentMethod: paymentMethod, // Dynamically sends "cod" or "qr"
-        status: "Pending"
+        customer: { ...formData, email: userInfo.email },
+        items: items.map(item => ({ name: item.name, price: Number(item.price), quantity: Number(item.quantity), img: item.img || "" })),
+        subtotal, tax, deliveryFee: 35, totalAmount: finalTotal,
+        paymentMethod, status: "Pending"
       };
-
       const response = await axios.post(`${API_URL}/api/orders`, orderData);
-
       if (response.data.success) {
         localStorage.removeItem("cart");
         window.dispatchEvent(new Event("cartUpdate"));
@@ -126,199 +87,105 @@ const Checkout = () => {
         setIsOrdered(true);
       }
     } catch (err) {
-      console.error(err);
-      alert("Something went wrong while placing the order. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
+      alert("Error placing order. Try again.");
+    } finally { setIsSubmitting(false); }
   };
 
-  if (!userInfo) return null;
-
-  /* ---------- SUCCESS VIEW ---------- */
-  if (isOrdered) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FDF8F3] px-6">
-        <div className="bg-white shadow-2xl rounded-3xl p-10 text-center max-w-md w-full border border-orange-100">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <PackageCheck size={40} className="text-green-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-[#4A3728] mb-2">Order Placed!</h1>
-          <p className="text-gray-500 mb-6">Thank you for choosing Bake-end Bakery. Your treats will arrive soon!</p>
-          <div className="bg-[#F6F1EB] p-4 rounded-xl text-sm font-mono text-[#4A3728] mb-8">
-            Order ID: <span className="font-bold">{orderResponseId}</span>
-          </div>
-          <button
-            onClick={() => navigate("/products")}
-            className="w-full bg-[#4A3728] text-white py-3.5 rounded-xl font-semibold hover:bg-[#3d2d21] transition-all shadow-lg"
-          >
-            Continue Shopping
-          </button>
-        </div>
+  if (isOrdered) return (
+    <div className="min-h-screen flex items-center justify-center bg-[#FDF8F3] p-6">
+      <div className="bg-white shadow-2xl rounded-3xl p-10 text-center max-w-md w-full">
+        <PackageCheck size={60} className="text-green-600 mx-auto mb-4" />
+        <h1 className="text-3xl font-bold text-[#4A3728]">Order Placed!</h1>
+        <p className="text-gray-500 my-4">Order ID: {orderResponseId}</p>
+        <button onClick={() => navigate("/products")} className="w-full bg-[#4A3728] text-white py-3 rounded-xl">Continue Shopping</button>
       </div>
-    );
-  }
+    </div>
+  );
 
-  /* ---------- MAIN CHECKOUT VIEW ---------- */
   return (
-    <div className="min-h-screen bg-[#FDF8F3] pt-24 pb-20 px-4 md:px-10 relative">
+    <div className="min-h-screen bg-[#FDF8F3] pt-24 pb-20 px-4 md:px-10">
       <div className="max-w-6xl mx-auto">
-        
-        {/* Simple navigation indicator */}
-        <div className="flex items-center gap-2 mb-10 text-[#4A3728]/70">
-          <button onClick={() => navigate(-1)} className="hover:text-[#4A3728]">Cart</button>
-          <span>/</span>
-          <span className="font-bold text-[#4A3728]">Checkout</span>
-        </div>
-
         <div className="grid lg:grid-cols-5 gap-10">
           
-          {/* LEFT: FORM SECTION */}
-          <div className="lg:col-span-3 space-y-8">
-            <h1 className="text-4xl font-bold text-[#4A3728]">Delivery Details</h1>
-            
-            <form onSubmit={handleConfirmOrder} className="space-y-6">
-              {/* Form inputs are the same as your screenshot */}
-              <div className="bg-white p-8 rounded-3xl shadow-sm space-y-5 border border-orange-50">
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
-                    <User size={14} /> Full Name
-                  </label>
-                  <input name="name" value={formData.name} onChange={handleInputChange} placeholder="Your Name" required className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728]" />
-                </div>
+          {/* LEFT SECTION */}
+          <div className="lg:col-span-3 space-y-6">
+            <h1 className="text-3xl font-bold text-[#4A3728]">Delivery Details</h1>
+            <div className="bg-white p-8 rounded-3xl shadow-sm border border-orange-50 space-y-4">
+              <input name="name" value={formData.name} onChange={handleInputChange} placeholder="Full Name" className="w-full bg-[#F9F9F9] p-4 rounded-xl border" />
+              <input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Phone Number" className="w-full bg-[#F9F9F9] p-4 rounded-xl border" />
+              <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="Shipping Address" rows="3" className="w-full bg-[#F9F9F9] p-4 rounded-xl border" />
+              <input name="pincode" value={formData.pincode} onChange={handleInputChange} placeholder="Pincode" className="w-full bg-[#F9F9F9] p-4 rounded-xl border" />
+            </div>
 
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
-                    <Phone size={14} /> Phone Number
-                  </label>
-                  <input name="phone" type="tel" value={formData.phone} onChange={handleInputChange} placeholder="e.g. +91 9876543210" required className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728]" />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
-                    <MapPin size={14} /> Shipping Address
-                  </label>
-                  <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="Street, Landmark, Apartment" required rows="3" className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728]" />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-gray-600">Pincode</label>
-                    <input name="pincode" value={formData.pincode} onChange={handleInputChange} placeholder="362001" required className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728]" />
-                   </div>
-                </div>
-              </div>
-
-              {/* --- NEW ADDITION: PAYMENT METHOD SELECTION --- */}
-              <div className="space-y-4">
-                <h3 className="text-xl font-bold text-[#4A3728]">Select Payment Method</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Option 1: COD */}
-                    <div 
-                        onClick={() => setPaymentMethod("cod")}
-                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${paymentMethod === 'cod' ? 'border-[#4A3728] bg-white shadow-md' : 'border-transparent bg-gray-100 opacity-70'}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <Banknote className="text-[#4A3728]" />
-                            <div>
-                                <p className="font-bold text-[#4A3728]">Cash on Delivery</p>
-                                <p className="text-xs text-gray-500">Pay when you receive</p>
-                            </div>
-                        </div>
-                        {paymentMethod === "cod" && <CheckCircle size={20} className="text-[#4A3728]" />}
-                    </div>
-
-                    {/* Option 2: QR */}
-                    <div 
-                        onClick={() => setPaymentMethod("qr")}
-                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${paymentMethod === 'qr' ? 'border-[#4A3728] bg-white shadow-md' : 'border-transparent bg-gray-100 opacity-70'}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <QrCode className="text-[#4A3728]" />
-                            <div>
-                                <p className="font-bold text-[#4A3728]">Scan & Pay</p>
-                                <p className="text-xs text-gray-500">Instant Online Payment</p>
-                            </div>
-                        </div>
-                        {paymentMethod === "qr" && <CheckCircle size={20} className="text-[#4A3728]" />}
-                    </div>
-                </div>
-
-                {/* QR CODE DISPLAY BOX (Appears only if QR is selected) */}
-                {paymentMethod === "qr" && (
-                    <div className="bg-white p-6 rounded-3xl border-2 border-dashed border-[#ff85a2] text-center animate-in fade-in duration-500">
-                        <p className="text-sm font-bold text-[#4A3728] mb-4 uppercase tracking-wider">Scan to Pay ₹{finalTotal}</p>
-                        <div className="inline-block p-4 bg-white rounded-xl shadow-inner">
-                            <QRCodeSVG value={upiString} size={160} />
-                        </div>
-                        <p className="text-xs text-gray-400 mt-4 italic">Please confirm the payment before clicking the button below</p>
-                    </div>
-                )}
-              </div>
-
-              {/* ACTION BUTTON (Updated to reflect chosen payment method) */}
-              <button 
-                type="submit" 
-                disabled={isSubmitting} 
-                className="w-full bg-[#4A3728] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#3d2d21] transition-all shadow-xl disabled:opacity-70"
+            {/* PAYMENT SELECTION AREA */}
+            <div className="space-y-3">
+               {/* COD BOX */}
+              <div 
+                onClick={() => setPaymentMethod("cod")}
+                className={`p-6 rounded-2xl cursor-pointer flex items-center justify-between transition-all ${paymentMethod === 'cod' ? 'bg-[#4A3728] text-white shadow-lg' : 'bg-white text-[#4A3728] border border-gray-200'}`}
               >
-                {isSubmitting ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="animate-spin" /> {paymentMethod === 'qr' ? "Verifying & Placing..." : "Placing Order..."}
+                <div className="flex items-center gap-4">
+                  <Banknote />
+                  <div>
+                    <p className="font-bold">Cash on Delivery</p>
+                    <p className={`text-xs ${paymentMethod === 'cod' ? 'text-orange-200' : 'text-gray-400'}`}>Pay when your cakes arrive</p>
                   </div>
-                ) : (
-                  paymentMethod === 'qr' ? "I have Paid - Confirm Order" : "Confirm Order"
-                )}
-              </button>
-            </form>
+                </div>
+                {paymentMethod === "cod" && <CheckCircle className="text-orange-300" />}
+              </div>
+
+              {/* QR BOX */}
+              <div 
+                onClick={() => setPaymentMethod("qr")}
+                className={`p-6 rounded-2xl cursor-pointer flex items-center justify-between transition-all ${paymentMethod === 'qr' ? 'bg-[#4A3728] text-white shadow-lg' : 'bg-white text-[#4A3728] border border-gray-200'}`}
+              >
+                <div className="flex items-center gap-4">
+                  <QrCode />
+                  <div>
+                    <p className="font-bold">Online Payment (QR)</p>
+                    <p className={`text-xs ${paymentMethod === 'qr' ? 'text-orange-200' : 'text-gray-400'}`}>Scan and pay instantly</p>
+                  </div>
+                </div>
+                {paymentMethod === "qr" && <CheckCircle className="text-orange-300" />}
+              </div>
+            </div>
+
+            {/* QR DISPLAY LOGIC */}
+            {paymentMethod === "qr" && (
+              <div className="bg-white p-6 rounded-3xl border-2 border-dashed border-[#4A3728] text-center">
+                <p className="font-bold text-[#4A3728] mb-3">Scan to Pay: ₹{finalTotal}</p>
+                <div className="bg-white p-2 inline-block rounded-lg shadow-md">
+                  <QRCodeSVG value={upiString} size={150} />
+                </div>
+              </div>
+            )}
+
+            <button onClick={handleConfirmOrder} disabled={isSubmitting} className="w-full bg-[#4A3728] text-white py-4 rounded-2xl font-bold text-xl hover:opacity-90 shadow-xl flex justify-center items-center gap-2">
+              {isSubmitting ? <Loader2 className="animate-spin" /> : "Confirm Order"}
+            </button>
           </div>
 
-          {/* RIGHT: SUMMARY SECTION */}
+          {/* RIGHT SECTION: SUMMARY */}
           <div className="lg:col-span-2">
-            <div className="bg-white p-8 rounded-3xl shadow-xl border border-orange-50 sticky top-28">
-              <h2 className="text-2xl font-bold text-[#4A3728] mb-6 flex items-center gap-2">
-                <Package size={22} className="text-orange-700" /> Order Summary
-              </h2>
-              
-              <div className="max-h-[300px] overflow-y-auto space-y-4 mb-6 pr-2 custom-scrollbar">
+            <div className="bg-white p-8 rounded-3xl shadow-xl sticky top-28">
+              <h2 className="text-2xl font-bold text-[#4A3728] mb-6 flex items-center gap-2"><Package className="text-orange-700" /> Order Summary</h2>
+              <div className="space-y-4 mb-6">
                 {items.map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-4 border-b border-gray-50 pb-4">
-                    <img src={item.img} alt={item.name} className="w-16 h-16 rounded-xl object-cover shadow-sm" />
+                  <div key={idx} className="flex items-center gap-4 border-b pb-4">
+                    <img src={item.img} alt={item.name} className="w-16 h-16 rounded-xl object-cover" />
                     <div className="flex-1">
                       <p className="font-bold text-[#4A3728]">{item.name}</p>
-                      <p className="text-xs text-gray-500 bg-gray-100 w-fit px-2 py-0.5 rounded">Qty: {item.quantity}</p>
+                      <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                     </div>
-                    <p className="font-bold text-[#4A3728]">₹{item.price * item.quantity}</p>
+                    <p className="font-bold">₹{item.price * item.quantity}</p>
                   </div>
                 ))}
               </div>
-
-              <div className="space-y-3 pt-2 border-t border-dashed">
-                <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
-                  <span>₹{subtotal}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>GST (5%)</span>
-                  <span>₹{tax}</span>
-                </div>
-                <div className="flex justify-between text-gray-600">
-                  <span>Delivery Fee</span>
-                  <span>{deliveryFee === 0 ? <span className="text-green-600 font-bold">FREE</span> : `₹${deliveryFee}`}</span>
-                </div>
-                
-                {discountAmount > 0 && (
-                  <div className="flex justify-between text-green-600 font-bold bg-green-50 p-2 rounded-lg">
-                    <span>Discount Applied</span>
-                    <span>-₹{discountAmount}</span>
-                  </div>
-                )}
-
-                <div className="flex justify-between text-xl font-black text-[#4A3728] border-t pt-4 mt-2">
-                  <span>Total</span>
-                  <span>₹{finalTotal}</span>
-                </div>
+              <div className="space-y-2 text-gray-600 border-t pt-4">
+                <div className="flex justify-between"><span>Subtotal</span><span>₹{subtotal}</span></div>
+                <div className="flex justify-between"><span>GST (5%)</span><span>₹{tax}</span></div>
+                <div className="flex justify-between"><span>Delivery</span><span>₹35</span></div>
+                <div className="flex justify-between text-xl font-black text-[#4A3728] pt-4"><span>Total</span><span>₹{finalTotal}</span></div>
               </div>
             </div>
           </div>
