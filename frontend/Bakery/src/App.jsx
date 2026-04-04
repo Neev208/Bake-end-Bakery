@@ -15,6 +15,7 @@ import OurStory from './Pages/OurStory';
 import ProductDetail from './Pages/ProductDetail';
 import Contact from './Pages/Contact';
 import Checkout from './Pages/Checkout';
+import CheckoutTest from './Pages/CheckoutTest'; // NEW: Added your test file
 import Success from './Pages/Success'; 
 
 // Category Pages
@@ -31,7 +32,6 @@ import PartyPlanner from './PartyPlanner';
 import CategoryPage from './Pages/CategoryPage';
 
 // --- THE ACCOUNT & SECURITY IMPORTS ---
-// FIXED: Importing from your file "AccountDetail"
 import AccountDetail from './Pages/AccountDetail'; 
 import ForgotPassword from "./Pages/ForgotPassword"; 
 import VerifyOTP from "./Pages/VerifyOTP";
@@ -73,7 +73,6 @@ function App() {
             <Route path="/verify-otp" element={<VerifyOTP />} />
 
             {/* Account Management */}
-            {/* FIXED: Using <AccountDetail /> to match the import above */}
             <Route path="/account" element={<AccountDetail />} />
             <Route path="/my-orders" element={<MyOrders />} />
 
@@ -95,6 +94,10 @@ function App() {
             {/* Cart & Checkout Flow */}
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout/>} />
+            
+            {/* NEW: Route for your new QR Code testing file */}
+            <Route path="/checkout-test" element={<CheckoutTest/>} />
+            
             <Route path="/order-success" element={<Success />} /> 
 
             {/* Catch-all for 404s */}
@@ -110,4 +113,3 @@ function App() {
 }
 
 export default App;
-
