@@ -10,7 +10,7 @@ import {
   MapPin,
   Phone,
   User,
-  QrCode // Added for UI
+  QrCode // Added for the new UI
 } from "lucide-react";
 import axios from "axios";
 import { QRCodeSVG } from "react-qr-code"; // QR Component
@@ -32,6 +32,7 @@ const Checkout = () => {
   const [deliveryFee, setDeliveryFee] = useState(35); 
   const [finalTotal, setFinalTotal] = useState(0);
 
+  // --- NEW STATE FOR PAYMENT METHOD ---
   const [paymentMethod, setPaymentMethod] = useState("cod"); // "cod" or "qr"
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOrdered, setIsOrdered] = useState(false);
@@ -44,8 +45,8 @@ const Checkout = () => {
     pincode: ""
   });
 
-  // --- BAKERY PAYMENT CONFIG ---
-  const BAKERY_UPI_ID = "yourname@bank"; // Replace with your actual UPI ID
+  // --- BAKERY PAYMENT CONFIG (Used for QR code string) ---
+  const BAKERY_UPI_ID = "bake-end@ybl"; // Replace with your actual UPI ID
   const BAKERY_NAME = "Bake-end Bakery";
   const upiString = `upi://pay?pa=${BAKERY_UPI_ID}&pn=${BAKERY_NAME}&am=${finalTotal}&cu=INR`;
 
@@ -83,9 +84,9 @@ const Checkout = () => {
   const handleConfirmOrder = async (e) => {
     e.preventDefault();
     
-    // If QR is selected, you might want to add a confirmation check here
+    // Safety check for QR
     if(paymentMethod === "qr") {
-        const confirmed = window.confirm("Have you completed the QR payment? Click OK to place order.");
+        const confirmed = window.confirm("Please confirm that you have completed the QR payment before placing the order.");
         if(!confirmed) return;
     }
 
@@ -160,14 +161,15 @@ const Checkout = () => {
 
   /* ---------- MAIN CHECKOUT VIEW ---------- */
   return (
-    <div className="min-h-screen bg-[#FDF8F3] pt-24 pb-20 px-4 md:px-10">
+    <div className="min-h-screen bg-[#FDF8F3] pt-24 pb-20 px-4 md:px-10 relative">
       <div className="max-w-6xl mx-auto">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="flex items-center gap-2 text-[#4A3728] font-medium mb-6 hover:translate-x-[-4px] transition-transform"
-        >
-          <ArrowLeft size={18} /> Back to Cart
-        </button>
+        
+        {/* Simple navigation indicator */}
+        <div className="flex items-center gap-2 mb-10 text-[#4A3728]/70">
+          <button onClick={() => navigate(-1)} className="hover:text-[#4A3728]">Cart</button>
+          <span>/</span>
+          <span className="font-bold text-[#4A3728]">Checkout</span>
+        </div>
 
         <div className="grid lg:grid-cols-5 gap-10">
           
@@ -176,75 +178,46 @@ const Checkout = () => {
             <h1 className="text-4xl font-bold text-[#4A3728]">Delivery Details</h1>
             
             <form onSubmit={handleConfirmOrder} className="space-y-6">
+              {/* Form inputs are the same as your screenshot */}
               <div className="bg-white p-8 rounded-3xl shadow-sm space-y-5 border border-orange-50">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
                     <User size={14} /> Full Name
                   </label>
-                  <input 
-                    name="name" 
-                    value={formData.name} 
-                    onChange={handleInputChange} 
-                    placeholder="Enter your name" 
-                    required 
-                    className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728] transition" 
-                  />
+                  <input name="name" value={formData.name} onChange={handleInputChange} placeholder="Your Name" required className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728]" />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
                     <Phone size={14} /> Phone Number
                   </label>
-                  <input 
-                    name="phone" 
-                    type="tel"
-                    value={formData.phone} 
-                    onChange={handleInputChange} 
-                    placeholder="e.g. +91 9876543210" 
-                    required 
-                    className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728] transition" 
-                  />
+                  <input name="phone" type="tel" value={formData.phone} onChange={handleInputChange} placeholder="e.g. +91 9876543210" required className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728]" />
                 </div>
 
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-600 flex items-center gap-2">
                     <MapPin size={14} /> Shipping Address
                   </label>
-                  <textarea 
-                    name="address" 
-                    value={formData.address} 
-                    onChange={handleInputChange} 
-                    placeholder="Street, Landmark, Apartment" 
-                    required 
-                    rows="3" 
-                    className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728] transition" 
-                  />
+                  <textarea name="address" value={formData.address} onChange={handleInputChange} placeholder="Street, Landmark, Apartment" required rows="3" className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728]" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                    <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-600">Pincode</label>
-                    <input 
-                      name="pincode" 
-                      value={formData.pincode} 
-                      onChange={handleInputChange} 
-                      placeholder="362001" 
-                      required 
-                      className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728] transition" 
-                    />
+                    <input name="pincode" value={formData.pincode} onChange={handleInputChange} placeholder="362001" required className="w-full bg-[#F9F9F9] p-3.5 rounded-xl outline-none border focus:border-[#4A3728]" />
                    </div>
                 </div>
               </div>
 
-              {/* PAYMENT METHOD SELECTION */}
+              {/* --- NEW ADDITION: PAYMENT METHOD SELECTION --- */}
               <div className="space-y-4">
                 <h3 className="text-xl font-bold text-[#4A3728]">Select Payment Method</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* COD Option */}
+                    {/* Option 1: COD */}
                     <div 
                         onClick={() => setPaymentMethod("cod")}
-                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${paymentMethod === 'cod' ? 'border-[#4A3728] bg-white shadow-md' : 'border-transparent bg-gray-100 opacity-60'}`}
+                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${paymentMethod === 'cod' ? 'border-[#4A3728] bg-white shadow-md' : 'border-transparent bg-gray-100 opacity-70'}`}
                     >
                         <div className="flex items-center gap-3">
                             <Banknote className="text-[#4A3728]" />
@@ -256,10 +229,10 @@ const Checkout = () => {
                         {paymentMethod === "cod" && <CheckCircle size={20} className="text-[#4A3728]" />}
                     </div>
 
-                    {/* QR Option */}
+                    {/* Option 2: QR */}
                     <div 
                         onClick={() => setPaymentMethod("qr")}
-                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${paymentMethod === 'qr' ? 'border-[#4A3728] bg-white shadow-md' : 'border-transparent bg-gray-100 opacity-60'}`}
+                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${paymentMethod === 'qr' ? 'border-[#4A3728] bg-white shadow-md' : 'border-transparent bg-gray-100 opacity-70'}`}
                     >
                         <div className="flex items-center gap-3">
                             <QrCode className="text-[#4A3728]" />
@@ -272,18 +245,19 @@ const Checkout = () => {
                     </div>
                 </div>
 
-                {/* QR CODE DISPLAY BOX */}
+                {/* QR CODE DISPLAY BOX (Appears only if QR is selected) */}
                 {paymentMethod === "qr" && (
                     <div className="bg-white p-6 rounded-3xl border-2 border-dashed border-[#ff85a2] text-center animate-in fade-in duration-500">
                         <p className="text-sm font-bold text-[#4A3728] mb-4 uppercase tracking-wider">Scan to Pay ₹{finalTotal}</p>
                         <div className="inline-block p-4 bg-white rounded-xl shadow-inner">
                             <QRCodeSVG value={upiString} size={160} />
                         </div>
-                        <p className="text-xs text-gray-400 mt-4 italic">Confirm the payment before clicking the button below</p>
+                        <p className="text-xs text-gray-400 mt-4 italic">Please confirm the payment before clicking the button below</p>
                     </div>
                 )}
               </div>
 
+              {/* ACTION BUTTON (Updated to reflect chosen payment method) */}
               <button 
                 type="submit" 
                 disabled={isSubmitting} 
