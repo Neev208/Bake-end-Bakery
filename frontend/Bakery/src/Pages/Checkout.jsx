@@ -7,12 +7,13 @@ import {
   Banknote,
   Loader2,
   PackageCheck,
-  AlertCircle,
   MapPin,
   Phone,
-  User
+  User,
+  QrCode // Added for UI
 } from "lucide-react";
 import axios from "axios";
+import { QRCodeSVG } from "react-qr-code"; // QR Component
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -28,10 +29,10 @@ const Checkout = () => {
 
   const [subtotal, setSubtotal] = useState(0);
   const [tax, setTax] = useState(0);
-  const [deliveryFee, setDeliveryFee] = useState(35); // Matches your image (₹35)
+  const [deliveryFee, setDeliveryFee] = useState(35); 
   const [finalTotal, setFinalTotal] = useState(0);
 
-  const [paymentMethod, setPaymentMethod] = useState("cod"); // Default to COD
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // "cod" or "qr"
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOrdered, setIsOrdered] = useState(false);
   const [orderResponseId, setOrderResponseId] = useState("");
@@ -43,7 +44,11 @@ const Checkout = () => {
     pincode: ""
   });
 
-  // Calculate totals whenever items change
+  // --- BAKERY PAYMENT CONFIG ---
+  const BAKERY_UPI_ID = "yourname@bank"; // Replace with your actual UPI ID
+  const BAKERY_NAME = "Bake-end Bakery";
+  const upiString = `upi://pay?pa=${BAKERY_UPI_ID}&pn=${BAKERY_NAME}&am=${finalTotal}&cu=INR`;
+
   useEffect(() => {
     if (!items || items.length === 0) return;
 
@@ -52,7 +57,7 @@ const Checkout = () => {
       0
     );
 
-    const calculatedTax = Math.round(calculatedSubtotal * 0.05); // 5% GST
+    const calculatedTax = Math.round(calculatedSubtotal * 0.05); 
     const calculatedDelivery = 35; 
     const total = calculatedSubtotal + calculatedTax + calculatedDelivery - discountAmount;
 
@@ -62,7 +67,6 @@ const Checkout = () => {
     setFinalTotal(total);
   }, [items, discountAmount]);
 
-  // Security & Navigation guard
   useEffect(() => {
     if (!userInfo) {
       navigate("/login?redirect=checkout");
@@ -78,6 +82,13 @@ const Checkout = () => {
 
   const handleConfirmOrder = async (e) => {
     e.preventDefault();
+    
+    // If QR is selected, you might want to add a confirmation check here
+    if(paymentMethod === "qr") {
+        const confirmed = window.confirm("Have you completed the QR payment? Click OK to place order.");
+        if(!confirmed) return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -101,7 +112,7 @@ const Checkout = () => {
         deliveryFee,
         discountAmount,
         totalAmount: finalTotal,
-        paymentMethod: "cod",
+        paymentMethod: paymentMethod, // Dynamically sends "cod" or "qr"
         status: "Pending"
       };
 
@@ -109,7 +120,6 @@ const Checkout = () => {
 
       if (response.data.success) {
         localStorage.removeItem("cart");
-        // Notify other components (Navbar) that cart is now empty
         window.dispatchEvent(new Event("cartUpdate"));
         setOrderResponseId(response.data.order._id);
         setIsOrdered(true);
@@ -161,7 +171,7 @@ const Checkout = () => {
 
         <div className="grid lg:grid-cols-5 gap-10">
           
-          {/* LEFT: FORM SECTION (3 columns) */}
+          {/* LEFT: FORM SECTION */}
           <div className="lg:col-span-3 space-y-8">
             <h1 className="text-4xl font-bold text-[#4A3728]">Delivery Details</h1>
             
@@ -226,18 +236,52 @@ const Checkout = () => {
                 </div>
               </div>
 
-              {/* PAYMENT BOX */}
-              <div
-                className="bg-[#4A3728] text-white p-6 rounded-2xl flex items-center justify-between shadow-md"
-              >
-                <div className="flex items-center gap-4">
-                  <Banknote size={24} />
-                  <div>
-                    <p className="font-bold">Cash on Delivery</p>
-                    <p className="text-xs text-orange-200">Pay when your cakes arrive</p>
-                  </div>
+              {/* PAYMENT METHOD SELECTION */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-[#4A3728]">Select Payment Method</h3>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* COD Option */}
+                    <div 
+                        onClick={() => setPaymentMethod("cod")}
+                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${paymentMethod === 'cod' ? 'border-[#4A3728] bg-white shadow-md' : 'border-transparent bg-gray-100 opacity-60'}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <Banknote className="text-[#4A3728]" />
+                            <div>
+                                <p className="font-bold text-[#4A3728]">Cash on Delivery</p>
+                                <p className="text-xs text-gray-500">Pay when you receive</p>
+                            </div>
+                        </div>
+                        {paymentMethod === "cod" && <CheckCircle size={20} className="text-[#4A3728]" />}
+                    </div>
+
+                    {/* QR Option */}
+                    <div 
+                        onClick={() => setPaymentMethod("qr")}
+                        className={`cursor-pointer p-5 rounded-2xl border-2 transition-all flex items-center justify-between ${paymentMethod === 'qr' ? 'border-[#4A3728] bg-white shadow-md' : 'border-transparent bg-gray-100 opacity-60'}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <QrCode className="text-[#4A3728]" />
+                            <div>
+                                <p className="font-bold text-[#4A3728]">Scan & Pay</p>
+                                <p className="text-xs text-gray-500">Instant Online Payment</p>
+                            </div>
+                        </div>
+                        {paymentMethod === "qr" && <CheckCircle size={20} className="text-[#4A3728]" />}
+                    </div>
                 </div>
-                <CheckCircle size={24} className="text-orange-300" />
+
+                {/* QR CODE DISPLAY BOX */}
+                {paymentMethod === "qr" && (
+                    <div className="bg-white p-6 rounded-3xl border-2 border-dashed border-[#ff85a2] text-center animate-in fade-in duration-500">
+                        <p className="text-sm font-bold text-[#4A3728] mb-4 uppercase tracking-wider">Scan to Pay ₹{finalTotal}</p>
+                        <div className="inline-block p-4 bg-white rounded-xl shadow-inner">
+                            <QRCodeSVG value={upiString} size={160} />
+                        </div>
+                        <p className="text-xs text-gray-400 mt-4 italic">Confirm the payment before clicking the button below</p>
+                    </div>
+                )}
               </div>
 
               <button 
@@ -247,16 +291,16 @@ const Checkout = () => {
               >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="animate-spin" /> Placing Order...
+                    <Loader2 className="animate-spin" /> {paymentMethod === 'qr' ? "Verifying & Placing..." : "Placing Order..."}
                   </div>
                 ) : (
-                  "Confirm Order"
+                  paymentMethod === 'qr' ? "I have Paid - Confirm Order" : "Confirm Order"
                 )}
               </button>
             </form>
           </div>
 
-          {/* RIGHT: SUMMARY SECTION (2 columns) */}
+          {/* RIGHT: SUMMARY SECTION */}
           <div className="lg:col-span-2">
             <div className="bg-white p-8 rounded-3xl shadow-xl border border-orange-50 sticky top-28">
               <h2 className="text-2xl font-bold text-[#4A3728] mb-6 flex items-center gap-2">
